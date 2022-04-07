@@ -68,17 +68,17 @@ def getbasketana(origindf,country):
     basket_sets['sumo']=basket_sets.sum(axis=1)
     basket_sets=basket_sets.loc[basket_sets['sumo']!=1,:]
     basket_sets.drop('sumo', axis=1, inplace=True)
-    basket_sets.to_csv(filepath+'basket_sets.csv')
+    # basket_sets.to_csv(filepath+'basket_sets.csv')
 
     frequent_itemsets = apriori(basket_sets, min_support=0.015,use_colnames=True)
     if frequent_itemsets.empty:
         return None,'无支持度超过阈值数据 1'
-    frequent_itemsets.to_csv(filepath+'frequent_itemsets.csv')
+    # frequent_itemsets.to_csv(filepath+'frequent_itemsets.csv')
     rules = association_rules(frequent_itemsets, metric="support", min_threshold=0)
     print('calculate finish')
     if rules.empty:
         return None,'无支持度超过阈值数据 2'
-    rules.to_csv(filepath+'rules.csv')
+    # rules.to_csv(filepath+'rules.csv')
     rules['support1']=rules.apply(lambda x:round(x.support*1000,5),axis=1)
 
     rules['antecedents1']=rules.apply(lambda x:str(list(x.antecedents)),axis=1)
