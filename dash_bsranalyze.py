@@ -27,12 +27,12 @@ def getorigindf():
 
     df_categorys = pd.read_sql('select * from amz_bsr_seed', con = conn )
     df_comp_asins=pd.read_sql(sql=f"""
-    SELECT 'competitor' asinsource,lower(seed.domain) domain,seed.id seedid,seed.name categoryname,seed.currency,info.asin FROM 
+    SELECT 'competitor' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,info.asin FROM 
     (select * from `amz_bsr_info` ) info
       left join  amz_bsr_seed seed on seed.id=info.bsr_seed_id
     """, con = conn )
     df_own_asins=pd.read_sql(sql=f"""
-    SELECT 'our' asinsource,lower(seed.domain) domain,seed.id seedid,seed.name categoryname,seed.currency,comp.own_asin asin FROM 
+    SELECT 'our' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,comp.own_asin asin FROM 
     (select * from `kp_competitor` ) comp
      left join  amz_bsr_seed seed on seed.id=comp.bsr_seed_id
     """, con = conn )
@@ -50,7 +50,6 @@ df_categorys,df_comp_asins,df_own_asins,df_jsinfo=getorigindf()
 df_categorys['domain']=df_categorys['domain'].apply(lambda x:x if x!='GB' else 'UK')
 df_jsinfo['estimatedsales_daily']=df_jsinfo['estimatedSales'].apply(lambda x:x/30)
 df_jsinfo.sort_values(['domain','asin','crawl_date'],inplace=True)
-
 with st.sidebar:
 
     countryoption = st.selectbox(
