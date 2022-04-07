@@ -37,6 +37,14 @@ def getorigindf():
      left join  amz_bsr_seed seed on seed.id=comp.bsr_seed_id
     """, con = conn )
     df_jsinfo=pd.read_sql('select * from js_product_info', con = conn )
+    #
+    df_concatowncomp=pd.concat([df_comp_asins,df_own_asins])
+    df_jsinfo=pd.merge(df_concatowncomp,df_jsinfo,on=['domain','asin'],how='left')
+
+
+
+
+
     return df_categorys,df_comp_asins,df_own_asins,df_jsinfo
 df_categorys,df_comp_asins,df_own_asins,df_jsinfo=getorigindf()
 df_categorys['domain']=df_categorys['domain'].apply(lambda x:x if x!='GB' else 'UK')
@@ -188,3 +196,14 @@ fig = go.Figure(data=traces, layout=layout)
 st.plotly_chart(fig, use_container_width=True)
 
 
+############
+st.subheader('尺寸分布3D散点图')
+df_jsinfo_size=df_jsinfo.loc[(df_jsinfo['seedid']==bsrseedid)&(df_jsinfo['domain']==countryoption.lower())&((df_jsinfo['dimensionUnit'] =='centimetres') |(df_jsinfo['dimensionUnit'] =='Zentimeter') ),:]
+fig1 = go.Figure(data=[
+     go.Scatter3d(x=df_jsinfo_size['length'], y=df_jsinfo_size['width'], z=df_jsinfo_size['height'],
+                  mode='markers',
+                  marker=dict(size=2)
+                 ),
+
+    ])
+st.plotly_chart(fig1, use_container_width=True)
