@@ -177,14 +177,15 @@ if type(basket) !=type(None):
     basket.drop('antecedents', axis=1, inplace=True)
     basket.drop('consequents', axis=1, inplace=True)
 
+st.write(basket)
 
 def convert_df(df):
  # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return df.to_csv().encode('utf-8')
-basketcsv = convert_df(basket)
+if type(basket) !=type(None):
 
-st.write(basket)
-st.download_button('下载数据',basketcsv)
+    basketcsv = convert_df(basket)
+    st.download_button('下载数据',basketcsv)
 #pareto
 st.subheader('销售额帕累托图')
 
