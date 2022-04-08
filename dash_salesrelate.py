@@ -1,3 +1,4 @@
+import numpy
 import streamlit as st
 import plotly.graph_objs as go
 from dataexcute_salesrelate import *
@@ -5,15 +6,21 @@ st.title('商品关联分析')
 
 
 dfo,dfcountry=getorigindf()
+with st.sidebar:
+    countryoption = st.selectbox(
+         '请选择国家',
+         tuple(dfcountry['country'].to_list()))
+    st.write('You selected:', countryoption)
+    isfilter_oneorder=st.checkbox('过滤只购买一种商品订单',True)
+    isfilter_skupre=st.checkbox('过滤前部相同sku',True)
+    abtogetimesfilter=st.slider('AB最低同时购买次数',1,20,1)
+    afilter=st.slider('A最低购买次数',1,50,1)
 
-
-countryoption = st.selectbox(
-     '请选择国家',
-     tuple(dfcountry['country'].to_list()))
-
-st.write('You selected:', countryoption)
+    # spvalue_filter=st.slider('选择最低支持度',0.0000001,0.015,0.0000001)
+    spfilter=st.text_input('输入最低支持度',value='0.0000001')
 #
-basket,status=getbasketana(dfo,countryoption)
+desc,basketsets_all,frequent_itemsets,basket,status=getbasketana(dfo,countryoption,isfilter_oneorder,spfilter,isfilter_skupre,abtogetimesfilter,afilter)
+st.sidebar.write(desc)
 # scatter = Scatter()
 # scatter.add_xaxis(basket['support'])
 # scatter.add_yaxis('',basket['confidence'])
@@ -59,8 +66,18 @@ supportheatfigure = {
         go.Heatmap(z=basket.support if basket is not None else [],
                    x=basket.antecedents1 if basket is not None else [],
                    y=basket.consequents1 if basket is not None else [],
+                   customdata=numpy.transpose(numpy.array([basket["abtimes"], basket["atimes"], basket["alltimes"]])),
+                   hovertemplate='a: %{x}'+'<br>'+'b: %{y}'+'<br>'+'支持度: %{z}'+'<br>'+'a、b同时购买次数: %{customdata[0]}'+'<br>'+'a购买次数: %{customdata[1]}'+'<br>'+'所有订单数: %{customdata[2]}',
                    colorscale='YlGnBu')],
-    'layout': go.Layout(margin=dict(l=100, b=100, t=50))
+    'layout': go.Layout(margin=dict(l=100, b=100, t=50),
+                        xaxis={
+                            'title': 'A',
+                            'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
+                        },
+                        yaxis={
+                            'title':'B',
+                            'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
+                        })
 }
 st.plotly_chart(supportheatfigure, use_container_width=True)
 st.markdown('''
@@ -100,9 +117,19 @@ confidenceheatfigure = {
         go.Heatmap(z=basket.confidence if basket is not None else [],
                    x=basket.antecedents1 if basket is not None else [],
                    y=basket.consequents1 if basket is not None else [],
+                   customdata=numpy.transpose(numpy.array([basket["abtimes"], basket["atimes"], basket["alltimes"]])),
+                   hovertemplate='a: %{x}' + '<br>' + 'b: %{y}' + '<br>' + '置信度: %{z}' + '<br>' + 'a、b同时购买次数: %{customdata[0]}' + '<br>' + 'a购买次数: %{customdata[1]}' + '<br>' + '所有订单数: %{customdata[2]}',
+
                    colorscale='YlGnBu')],
-    'layout': go.Layout(margin=dict(l=100, b=100, t=50))
-}
+    'layout': go.Layout(margin=dict(l=100, b=100, t=50),
+                        xaxis={
+                            'title': 'A',
+                            'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
+                        },
+                        yaxis={
+                            'title':'B',
+                            'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
+                        })}
 
 st.plotly_chart(confidenceheatfigure, use_container_width=True)
 
@@ -143,9 +170,19 @@ liftheatfigure = {
         go.Heatmap(z=basket.lift if basket is not None else [],
                    x=basket.antecedents1 if basket is not None else [],
                    y=basket.consequents1 if basket is not None else [],
+                   customdata=numpy.transpose(numpy.array([basket["abtimes"], basket["atimes"], basket["alltimes"]])),
+                   hovertemplate='a: %{x}' + '<br>' + 'b: %{y}' + '<br>' + '提升度: %{z}' + '<br>' + 'a、b同时购买次数: %{customdata[0]}' + '<br>' + 'a购买次数: %{customdata[1]}' + '<br>' + '所有订单数: %{customdata[2]}',
+
                    colorscale='YlGnBu')],
-    'layout': go.Layout(margin=dict(l=100, b=100, t=50))
-}
+    'layout': go.Layout(margin=dict(l=100, b=100, t=50),
+                        xaxis={
+                            'title': 'A',
+                            'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
+                        },
+                        yaxis={
+                            'title':'B',
+                            'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
+                        })}
 
 
 st.plotly_chart(liftheatfigure, use_container_width=True)
@@ -163,7 +200,12 @@ figure_scatter = {
         name="",
         mode="markers")],
     'layout': go.Layout(
+        xaxis={
+            'title': '支持度',
+            'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
+        },
         yaxis={
+            'title':'置信度',
             'hoverformat': ''  # 如果想显示小数点后两位'.2f'，显示百分比'.2%'
         }
     )
