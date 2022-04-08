@@ -84,12 +84,12 @@ def getbasketana(origindf,country,isfilter,sp_filter,isfilter_skupreword,abtoget
 
     frequent_itemsets = apriori(basket_sets, min_support=sp_filter_float,use_colnames=True)#0.015#0.0000001
     if frequent_itemsets.empty:
-        return None,'无支持度超过阈值数据 1'
+        return None,None,None,None,'无支持度超过阈值数据 1'
     # frequent_itemsets.to_csv(filepath+'frequent_itemsets.csv')
     rules = association_rules(frequent_itemsets, metric="support", min_threshold=0)
     print('calculate finish')
     if rules.empty:
-        return None,'无支持度超过阈值数据 2'
+        return None,None,None,None,'无支持度超过阈值数据 2'
     rules['support1']=rules.apply(lambda x:round(x.support*1000,5),axis=1)
 
     rules['antecedentsskunum']=rules.apply(lambda x:len(list(x.antecedents)),axis=1)
