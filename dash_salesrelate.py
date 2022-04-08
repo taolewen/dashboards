@@ -66,7 +66,11 @@ supportheatfigure = {
         go.Heatmap(z=basket.support if basket is not None else [],
                    x=basket.antecedents1 if basket is not None else [],
                    y=basket.consequents1 if basket is not None else [],
-                   customdata=numpy.transpose(numpy.array([basket["abtimes"], basket["atimes"], basket["alltimes"]])),
+                   customdata=numpy.transpose(numpy.array([
+basket.abtimes if basket is not None else [],
+basket.atimes if basket is not None else [],
+basket.alltimes if basket is not None else [],
+                       ])),
                    hovertemplate='a: %{x}'+'<br>'+'b: %{y}'+'<br>'+'支持度: %{z}'+'<br>'+'a、b同时购买次数: %{customdata[0]}'+'<br>'+'a购买次数: %{customdata[1]}'+'<br>'+'所有订单数: %{customdata[2]}',
                    colorscale='YlGnBu')],
     'layout': go.Layout(margin=dict(l=100, b=100, t=50),
@@ -117,7 +121,11 @@ confidenceheatfigure = {
         go.Heatmap(z=basket.confidence if basket is not None else [],
                    x=basket.antecedents1 if basket is not None else [],
                    y=basket.consequents1 if basket is not None else [],
-                   customdata=numpy.transpose(numpy.array([basket["abtimes"], basket["atimes"], basket["alltimes"]])),
+                   customdata=numpy.transpose(numpy.array([
+                       basket.abtimes if basket is not None else [],
+                       basket.atimes if basket is not None else [],
+                       basket.alltimes if basket is not None else [],
+                   ])),
                    hovertemplate='a: %{x}' + '<br>' + 'b: %{y}' + '<br>' + '置信度: %{z}' + '<br>' + 'a、b同时购买次数: %{customdata[0]}' + '<br>' + 'a购买次数: %{customdata[1]}' + '<br>' + '所有订单数: %{customdata[2]}',
 
                    colorscale='YlGnBu')],
@@ -170,7 +178,11 @@ liftheatfigure = {
         go.Heatmap(z=basket.lift if basket is not None else [],
                    x=basket.antecedents1 if basket is not None else [],
                    y=basket.consequents1 if basket is not None else [],
-                   customdata=numpy.transpose(numpy.array([basket["abtimes"], basket["atimes"], basket["alltimes"]])),
+                   customdata=numpy.transpose(numpy.array([
+                       basket.abtimes if basket is not None else [],
+                       basket.atimes if basket is not None else [],
+                       basket.alltimes if basket is not None else [],
+                   ])),
                    hovertemplate='a: %{x}' + '<br>' + 'b: %{y}' + '<br>' + '提升度: %{z}' + '<br>' + 'a、b同时购买次数: %{customdata[0]}' + '<br>' + 'a购买次数: %{customdata[1]}' + '<br>' + '所有订单数: %{customdata[2]}',
 
                    colorscale='YlGnBu')],
