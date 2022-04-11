@@ -71,6 +71,8 @@ bsrseedid=df_categorys.loc[(df_categorys['domain']==countryoption)&(df_categorys
 df_own_asins_c=df_own_asins.loc[df_own_asins['seedid']==bsrseedid,:]
 df_comp_asins_c=df_comp_asins.loc[df_comp_asins['seedid']==bsrseedid,:]
 
+st.subheader('竞对价格曲线')
+
 col1,col2=st.columns(2)
 with col1:
     ms1=st.multiselect('选择自有产品asin',set(df_own_asins_c['asin'].to_list()),[])
