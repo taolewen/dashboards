@@ -28,9 +28,15 @@ def getorigindf():
 
     df_categorys = pd.read_sql('select * from amz_bsr_seed', con = conn )
     df_comp_asins=pd.read_sql(sql=f"""
+    select asinsource,domain,seedid,categoryname,currency,asin
+    from
+    (
     SELECT 'competitor' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,info.asin FROM 
     (select * from `amz_bsr_info` ) info
       left join  amz_bsr_seed seed on seed.id=info.bsr_seed_id
+      ) aa
+      group by asinsource,domain,seedid,categoryname,currency,asin
+      
     """, con = conn )
     df_own_asins=pd.read_sql(sql=f"""
     SELECT 'our' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,comp.own_asin asin FROM 
@@ -77,12 +83,21 @@ col1,col2=st.columns(2)
 with col1:
     ms1=st.multiselect('选择自有产品asin',set(df_own_asins_c['asin'].to_list()),[])
     # col1.write(ms)
-    showprice=st.checkbox('显示价格',True)
-    showrank=st.checkbox('显示排名',True)
-    showsalesqty=st.checkbox('显示预估日销',True)
+
 with col2:
     ms2=st.multiselect('选择竞对asin',set(df_comp_asins_c['asin'].to_list()),[])
     # col2.write(ms)
+showasin=st.checkbox('显示分asin',True)
+showavg=st.checkbox('显示平均',True)
+df_jsinfo_ms1=df_jsinfo.loc[(df_jsinfo['asin'].isin(ms1))&(df_jsinfo['domain']==countryoption.lower())&(df_jsinfo['asinsource']=='our')]
+print('>>>>>>>>>>>>>>>ms1df')
+dfjsinfoms1_avg=df_jsinfo_ms1.groupby('crawl_date').agg({'price':'mean','rank':'mean','estimatedsales_daily':'mean'}).reset_index()
+print(dfjsinfoms1_avg)
+
+df_jsinfo_ms2=df_jsinfo.loc[(df_jsinfo['asin'].isin(ms2))&(df_jsinfo['domain']==countryoption.lower())&(df_jsinfo['asinsource']=='competitor')]
+print('>>>>>>>>>>>>>>>ms2df')
+dfjsinfoms2_avg=df_jsinfo_ms2.groupby('crawl_date').agg({'price':'mean','rank':'mean','estimatedsales_daily':'mean'}).reset_index()
+print(dfjsinfoms2_avg)
 
 owncolors=['#fa8072','#ff73b3','#ff7f50','#ff8033','#e68ab8','#e9a867','#f3e1ae']
 compcolors=['#c0c0c0','#5686bf','#5f9ea0','#2a52be','#73b839','#5c50e6','#0e6551']
@@ -90,8 +105,9 @@ compcolors=['#c0c0c0','#5686bf','#5f9ea0','#2a52be','#73b839','#5c50e6','#0e6551
 pricetraces=[]
 ranktraces=[]
 salestraces=[]
+
 for i,asin in enumerate(ms1):
-    if showprice:
+    if showasin:
         pricetraces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
@@ -99,24 +115,22 @@ for i,asin in enumerate(ms1):
                 name='价格-'+asin,
                 mode='lines',
                 # line=('longdashdot'),
-                line=dict(dash='longdashdot',color=owncolors[i], width=3, ),
+                line=dict(dash='solid',color=owncolors[i], width=3, ),
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
-    if showrank:
         ranktraces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['rank'],
                 name='排名-' + asin,
                 mode='lines',
-                line=dict(dash='longdash',color=owncolors[i], width=3, ),
+                line=dict(dash='solid',color=owncolors[i], width=3, ),
 
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
                 # yaxis='y2'
             ))
-    if showsalesqty:
         salestraces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
@@ -128,34 +142,33 @@ for i,asin in enumerate(ms1):
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
+
 for j,asin in enumerate(ms2):
-    if showprice:
+    if showasin:
         pricetraces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['price'],
                 name='价格-'+asin,
                 mode='lines',
-                line=dict(dash='longdashdot', color=compcolors[j],width=3, ),
+                line=dict(dash='solid', color=compcolors[j],width=3, ),
 
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
-    if showrank:
         ranktraces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['rank'],
                 name='排名-' + asin,
                 mode='lines',
-                line=dict(dash='longdash', color=compcolors[j], width=3, ),
+                line=dict(dash='solid', color=compcolors[j], width=3, ),
 
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
                 # yaxis='y2'
 
             ))
-    if showsalesqty:
         salestraces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
@@ -167,6 +180,75 @@ for j,asin in enumerate(ms2):
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
+
+
+if showavg:
+    pricetraces.append(
+        go.Scatter(
+            x=dfjsinfoms1_avg['crawl_date'],
+            y=dfjsinfoms1_avg['price'],
+            name='价格-我方均价',
+            mode='lines',
+            # line=('longdashdot'),
+            line=dict(dash='longdashdot',color='#cc0033', width=3, ),
+            # line=dict(color=colors[i], width=line_size[i]),
+            connectgaps=True,
+        ))
+    pricetraces.append(
+        go.Scatter(
+            x=dfjsinfoms2_avg['crawl_date'],
+            y=dfjsinfoms2_avg['price'],
+            name='价格-对方均价',
+            mode='lines',
+            # line=('longdashdot'),
+            line=dict(dash='longdashdot',color='#0000ff', width=3, ),
+            # line=dict(color=colors[i], width=line_size[i]),
+            connectgaps=True,
+        ))
+    ranktraces.append(
+        go.Scatter(
+            x=dfjsinfoms1_avg['crawl_date'],
+            y=dfjsinfoms1_avg['rank'],
+            name='价格-我方平均排名',
+            mode='lines',
+            # line=('longdashdot'),
+            line=dict(dash='longdashdot',color='#cc0033', width=3, ),
+            # line=dict(color=colors[i], width=line_size[i]),
+            connectgaps=True,
+        ))
+    ranktraces.append(
+        go.Scatter(
+            x=dfjsinfoms2_avg['crawl_date'],
+            y=dfjsinfoms2_avg['rank'],
+            name='价格-对方平均排名',
+            mode='lines',
+            # line=('longdashdot'),
+            line=dict(dash='longdashdot',color='#0000ff', width=3, ),
+            # line=dict(color=colors[i], width=line_size[i]),
+            connectgaps=True,
+        ))
+    salestraces.append(
+        go.Scatter(
+            x=dfjsinfoms1_avg['crawl_date'],
+            y=dfjsinfoms1_avg['estimatedsales_daily'],
+            name='价格-我方平均销量',
+            mode='lines',
+            # line=('longdashdot'),
+            line=dict(dash='longdashdot',color='#cc0033', width=3, ),
+            # line=dict(color=colors[i], width=line_size[i]),
+            connectgaps=True,
+        ))
+    salestraces.append(
+        go.Scatter(
+            x=dfjsinfoms2_avg['crawl_date'],
+            y=dfjsinfoms2_avg['estimatedsales_daily'],
+            name='价格-对方平均销量',
+            mode='lines',
+            # line=('longdashdot'),
+            line=dict(dash='longdashdot',color='#0000ff', width=3, ),
+            # line=dict(color=colors[i], width=line_size[i]),
+            connectgaps=True,
+        ))
 # layout = go.Layout(
 #     xaxis=dict(
 #         showline=True,
@@ -211,21 +293,34 @@ for j,asin in enumerate(ms2):
 #     showlegend=False,
 # )
 # fig = go.Figure(data=traces, layout=layout)
+
 pricefig=go.Figure(data=pricetraces)
+
 rankfig=go.Figure(data=ranktraces)
+# st.plotly_chart(rankfig)
+
 salesfig=go.Figure(data=salestraces)
 metric_figure = make_subplots(
     rows=3, cols=1,
     # specs=[[{}, {}],
     #        [{}, {}],
     #        [{'colspan': 2}, {}]]
+# subplot_titles=tuple(['价格','排名','预估日销量'])
 )
+
+
 for t in pricefig.data:
     metric_figure.append_trace(t, row=1, col=1)
 for t in rankfig.data:
     metric_figure.append_trace(t, row=2, col=1)
 for t in salesfig.data:
     metric_figure.append_trace(t, row=3, col=1)
+# metric_figure["layout"]["xaxis"].update({"title": "trace0的x轴", "titlefont": {"color": "red"}})
+metric_figure["layout"]["yaxis"].update({"title": "价格"})
+# metric_figure["layout"]["xaxis2"].update({"title": "trace1的x轴", "titlefont": {"color": "green"}})
+metric_figure["layout"]["yaxis2"].update({"title": "排名","autorange":"reversed"})
+# metric_figure["layout"]["xaxis3"].update({"title": "trace2的x轴", "titlefont": {"color": "pink"}})
+metric_figure["layout"]["yaxis3"].update({"title": "预估日销"})
 
 st.plotly_chart(metric_figure, use_container_width=True)
 
