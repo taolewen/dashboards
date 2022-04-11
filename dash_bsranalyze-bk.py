@@ -10,7 +10,6 @@ import streamlit_echarts
 import random
 import plotly.graph_objs as go
 import sqlalchemy as sa
-from plotly.subplots import make_subplots
 
 from pyecharts import options as opts
 
@@ -75,157 +74,125 @@ col1,col2=st.columns(2)
 with col1:
     ms1=st.multiselect('选择自有产品asin',set(df_own_asins_c['asin'].to_list()),[])
     # col1.write(ms)
-    showprice=st.checkbox('显示价格',True)
-    showrank=st.checkbox('显示排名',True)
-    showsalesqty=st.checkbox('显示预估日销',True)
+    showprice=st.checkbox('显示价格')
+    showrank=st.checkbox('显示排名')
+    showsalesqty=st.checkbox('显示预估日销')
 with col2:
     ms2=st.multiselect('选择竞对asin',set(df_comp_asins_c['asin'].to_list()),[])
     # col2.write(ms)
 
-owncolors=['#fa8072','#ff73b3','#ff7f50','#ff8033','#e68ab8','#e9a867','#f3e1ae']
-compcolors=['#c0c0c0','#5686bf','#5f9ea0','#2a52be','#73b839','#5c50e6','#0e6551']
-
-pricetraces=[]
-ranktraces=[]
-salestraces=[]
-for i,asin in enumerate(ms1):
+traces=[]
+for asin in ms1:
     if showprice:
-        pricetraces.append(
+        traces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['price'],
                 name='价格-'+asin,
                 mode='lines',
-                # line=('longdashdot'),
-                line=dict(dash='longdashdot',color=owncolors[i], width=3, ),
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
     if showrank:
-        ranktraces.append(
+        traces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['rank'],
                 name='排名-' + asin,
                 mode='lines',
-                line=dict(dash='longdash',color=owncolors[i], width=3, ),
-
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
-                # yaxis='y2'
+                yaxis='y2'
             ))
     if showsalesqty:
-        salestraces.append(
+        traces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['estimatedsales_daily'],
                 name='销量-' + asin,
                 mode='lines',
-                line=dict(dash='solid',color=owncolors[i], width=3, ),
-
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
-for j,asin in enumerate(ms2):
+for asin in ms2:
     if showprice:
-        pricetraces.append(
+        traces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['price'],
                 name='价格-'+asin,
                 mode='lines',
-                line=dict(dash='longdashdot', color=compcolors[j],width=3, ),
 
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
     if showrank:
-        ranktraces.append(
+        traces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['rank'],
                 name='排名-' + asin,
                 mode='lines',
-                line=dict(dash='longdash', color=compcolors[j], width=3, ),
-
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
-                # yaxis='y2'
+                yaxis='y2'
 
             ))
     if showsalesqty:
-        salestraces.append(
+        traces.append(
             go.Scatter(
                 x=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['crawl_date'],
                 y=df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['domain']==countryoption.lower())]['estimatedsales_daily'],
                 name='销量-' + asin,
                 mode='lines',
-                line=dict(dash='solid', color=compcolors[j], width=3, ),
-
                 # line=dict(color=colors[i], width=line_size[i]),
                 connectgaps=True,
             ))
-# layout = go.Layout(
-#     xaxis=dict(
-#         showline=True,
-#         showgrid=False,
-#         showticklabels=True,
-#         linecolor='rgb(204, 204, 204)',
-#         linewidth=2,
-#         title='日期',
-#         # autotick=False,
-#         ticks='outside',
-#         tickcolor='rgb(204, 204, 204)',
-#         tickwidth=2,
-#         ticklen=5,
-#         tickfont=dict(
-#             family='Arial',
-#             size=12,
-#             color='rgb(82, 82, 82)',
-#         ),
-#     ),
-#     yaxis=dict(
-#         showgrid=False,
-#         zeroline=False,
-#         showline=True,
-#         showticklabels=True,
-#     ),
-#     yaxis2=dict(
-#         title='排名',
-#         side='right',
-#         anchor='x',
-#         overlaying='y',
-#         showline = True,
-#         showticklabels = True,
-#         autorange='reversed'
-#     ),
-#     autosize=False,
-#     margin=dict(
-#         autoexpand=False,
-#         l=100,
-#         r=20,
-#         t=110,
-#     ),
-#     showlegend=False,
-# )
-# fig = go.Figure(data=traces, layout=layout)
-pricefig=go.Figure(data=pricetraces)
-rankfig=go.Figure(data=ranktraces)
-salesfig=go.Figure(data=salestraces)
-metric_figure = make_subplots(
-    rows=3, cols=1,
-    # specs=[[{}, {}],
-    #        [{}, {}],
-    #        [{'colspan': 2}, {}]]
+layout = go.Layout(
+    xaxis=dict(
+        showline=True,
+        showgrid=False,
+        showticklabels=True,
+        linecolor='rgb(204, 204, 204)',
+        linewidth=2,
+        title='日期',
+        # autotick=False,
+        ticks='outside',
+        tickcolor='rgb(204, 204, 204)',
+        tickwidth=2,
+        ticklen=5,
+        tickfont=dict(
+            family='Arial',
+            size=12,
+            color='rgb(82, 82, 82)',
+        ),
+    ),
+    yaxis=dict(
+        showgrid=False,
+        zeroline=False,
+        showline=True,
+        showticklabels=True,
+    ),
+    yaxis2=dict(
+        title='排名',
+        side='right',
+        anchor='x',
+        overlaying='y',
+        showline = True,
+        showticklabels = True,
+        autorange='reversed'
+    ),
+    autosize=False,
+    margin=dict(
+        autoexpand=False,
+        l=100,
+        r=20,
+        t=110,
+    ),
+    showlegend=False,
 )
-for t in pricefig.data:
-    metric_figure.append_trace(t, row=1, col=1)
-for t in rankfig.data:
-    metric_figure.append_trace(t, row=2, col=1)
-for t in salesfig.data:
-    metric_figure.append_trace(t, row=3, col=1)
-
-st.plotly_chart(metric_figure, use_container_width=True)
+fig = go.Figure(data=traces, layout=layout)
+st.plotly_chart(fig, use_container_width=True)
 
 
 ############
