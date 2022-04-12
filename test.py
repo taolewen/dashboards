@@ -1,4 +1,3 @@
-import pandas as pd
-import pymssql
-import pymysql
-import pyodbc
+a=[1,2,4,3,5]
+a.sort()
+print(a)

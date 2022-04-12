@@ -1,5 +1,5 @@
 from urllib.parse import quote_plus
-
+import uuid
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -28,18 +28,18 @@ def getorigindf():
 
     df_categorys = pd.read_sql('select * from amz_bsr_seed', con = conn )
     df_comp_asins=pd.read_sql(sql=f"""
-    select asinsource,domain,seedid,categoryname,currency,asin
+    select asinsource,domain,seedid,categoryname,currency,asin,crawl_date_bsr,rank rank_bsr
     from
     (
-    SELECT 'competitor' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,info.asin FROM 
-    (select * from `amz_bsr_info` ) info
+    SELECT 'competitor' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,info.asin,info.crawl_date crawl_date_bsr,info.rank FROM 
+    (select * from `amz_bsr_info` where (bsr_seed_id,asin,crawl_date) in (select bsr_seed_id,asin,max(crawl_date) maxcrawldate from amz_bsr_info group by bsr_seed_id,asin) ) info
       left join  amz_bsr_seed seed on seed.id=info.bsr_seed_id
       ) aa
-      group by asinsource,domain,seedid,categoryname,currency,asin
+    group by asinsource,domain,seedid,categoryname,currency,asin,crawl_date_bsr,rank
       
     """, con = conn )
     df_own_asins=pd.read_sql(sql=f"""
-    SELECT 'our' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,comp.own_asin asin FROM 
+    SELECT 'our' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,comp.own_asin asin,'' crawl_date_bsr,'' rank_bsr FROM 
     (select * from `kp_competitor` ) comp
      left join  amz_bsr_seed seed on seed.id=comp.bsr_seed_id
     """, con = conn )
@@ -47,10 +47,6 @@ def getorigindf():
     #
     df_concatowncomp=pd.concat([df_comp_asins,df_own_asins])
     df_jsinfo=pd.merge(df_concatowncomp,df_jsinfo,on=['domain','asin'],how='left')
-
-
-
-
 
     return df_categorys,df_comp_asins,df_own_asins,df_jsinfo
 df_categorys,df_comp_asins,df_own_asins,df_jsinfo=getorigindf()
@@ -78,15 +74,77 @@ df_own_asins_c=df_own_asins.loc[df_own_asins['seedid']==bsrseedid,:]
 df_comp_asins_c=df_comp_asins.loc[df_comp_asins['seedid']==bsrseedid,:]
 
 st.subheader('竞对价格曲线')
-
 col1,col2=st.columns(2)
-with col1:
-    ms1=st.multiselect('选择自有产品asin',set(df_own_asins_c['asin'].to_list()),[])
-    # col1.write(ms)
+# with col1:
+#     ms3=st.multiselect('选择自有产品asin',set(df_own_asins_c['asin'].to_list()),[])
+#     # col1.write(ms)
 
-with col2:
-    ms2=st.multiselect('选择竞对asin',set(df_comp_asins_c['asin'].to_list()),[])
-    # col2.write(ms)
+
+cbxls = {}
+expander_1=col1.expander('选择自有产品asin')
+for i, asin in enumerate(df_own_asins_c['asin'].to_list()):
+    print(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1])
+    if  pd.isna(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]) \
+            or df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]=='None':
+        cbxls[asin] = expander_1.checkbox('选择asin', key=f'cbxlkey_{asin}_{str(i)}')
+        expander_1.write({'SELLER':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['sellerName'].values[-1],
+                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1]})
+    else:
+
+        cbxls[asin] = expander_1.checkbox('选择asin', key=f'cbxlkey_{asin}_{str(i)}')
+        expander_1.image(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1], width=100,
+                     )
+        expander_1.write({'SELLER':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['sellerName'].values[-1],
+                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1]})
+ms1=[]
+for k,v in cbxls.items():
+    if v==True:
+        ms1.append(k)
+
+
+
+
+# with col2:
+#     ms2=st.multiselect('选择竞对asin',set(df_comp_asins_c['asin'].to_list()),[])
+#     # col2.write(ms)
+
+
+cbxrs = {}
+datelist=list(set(df_comp_asins_c['crawl_date_bsr'].to_list()))
+datelist.sort()
+expander_2=col2.expander('选择竞对产品asin')
+startdate,end_date=expander_2.select_slider(
+    '选择bsr日期区间',
+    options=datelist,
+    value=(datelist[-1],datelist[-1])
+)
+for i, asin in enumerate(df_comp_asins_c['asin'].to_list()):
+    print(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1])
+    if  pd.isna(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]) \
+            or df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]=='None':
+        cbxrs[asin] = expander_2.checkbox('选择asin', key=f'cbxrkey_{asin}_{str(i)}')
+        expander_2.write({'SELLER':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['sellerName'].values[-1],
+                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1]})
+    else:
+
+        cbxrs[asin] = expander_2.checkbox('选择asin', key=f'cbxrkey_{asin}_{str(i)}')
+        expander_2.image(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1], width=100,
+                     )
+        expander_2.write({'SELLER':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['sellerName'].values[-1],
+                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1]})
+ms2=[]
+for k,v in cbxrs.items():
+    if v==True:
+        ms2.append(k)
+
+
+
+
+
+
+
+
+
 showasin=st.checkbox('显示分asin',True)
 showavg=st.checkbox('显示平均',True)
 df_jsinfo_ms1=df_jsinfo.loc[(df_jsinfo['asin'].isin(ms1))&(df_jsinfo['domain']==countryoption.lower())&(df_jsinfo['asinsource']=='our')]
