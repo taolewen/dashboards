@@ -449,24 +449,11 @@ def getrangedf(df,granularity=20):
 df_sizerange,tvlist=getrangedf(df_jsinfo_size,20)
 print(tvlist)
 print(df_sizerange)
-
-############
-st.subheader('尺寸分布3D热力图')
-fig2 = go.Figure(data=[
-     go.Scatter3d(x=df_sizerange['length_iwr'], y=df_sizerange['width_iwr'], z=df_sizerange['height_iwr'],
-                  mode='markers',
-                  # marker=dict(size=2),
-
-                    marker = dict(
-                          size = 4,
-                          color = df_sizerange['length'], # set color to an array/list of desired values
-                          colorscale = 'Viridis'
-                          )
-
-                 ),
-    ])
+#
+# ############
+# st.subheader('尺寸分布3D热力图')
 # fig2 = go.Figure(data=[
-#      go.Scatter3d(x=df_sizerange['length_iwr_midv'], y=df_sizerange['width_iwr_midv'], z=df_sizerange['height_iwr_midv'],
+#      go.Scatter3d(x=df_sizerange['length_iwr'], y=df_sizerange['width_iwr'], z=df_sizerange['height_iwr'],
 #                   mode='markers',
 #                   # marker=dict(size=2),
 #
@@ -478,25 +465,38 @@ fig2 = go.Figure(data=[
 #
 #                  ),
 #     ])
-fig2.update_layout(
-    xaxis=dict(
-linecolor='red',
-        tickmode='array',
-        tickvals=tvlist+['fdfd'],
-        ticktext=tvlist+['fdfd','123','111','22','333','444','55','66'],
-
-    ),
-    yaxis=dict(
-
-        tickmode='array',
-        tickvals=tvlist + ['fdfd'],
-        ticktext=tvlist + ['fdfd'],
-    ),
-    # zaxis=dict(
-    #
-    #     tickmode='array',
-    #     tickvals=tvlist + ['fdfd'],
-    #     ticktext=tvlist + ['fdfd'],
-    # ),
-)
-st.plotly_chart(fig2, use_container_width=True)
+# # fig2 = go.Figure(data=[
+# #      go.Scatter3d(x=df_sizerange['length_iwr_midv'], y=df_sizerange['width_iwr_midv'], z=df_sizerange['height_iwr_midv'],
+# #                   mode='markers',
+# #                   # marker=dict(size=2),
+# #
+# #                     marker = dict(
+# #                           size = 4,
+# #                           color = df_sizerange['length'], # set color to an array/list of desired values
+# #                           colorscale = 'Viridis'
+# #                           )
+# #
+# #                  ),
+# #     ])
+# fig2.update_layout(
+#     xaxis=dict(
+# linecolor='red',
+#         tickmode='array',
+#         tickvals=tvlist+['fdfd'],
+#         ticktext=tvlist+['fdfd','123','111','22','333','444','55','66'],
+#
+#     ),
+#     yaxis=dict(
+#
+#         tickmode='array',
+#         tickvals=tvlist + ['fdfd'],
+#         ticktext=tvlist + ['fdfd'],
+#     ),
+#     # zaxis=dict(
+#     #
+#     #     tickmode='array',
+#     #     tickvals=tvlist + ['fdfd'],
+#     #     ticktext=tvlist + ['fdfd'],
+#     # ),
+# )
+# st.plotly_chart(fig2, use_container_width=True)
