@@ -38,6 +38,7 @@ def getorigindf():
     group by asinsource,domain,seedid,categoryname,currency,asin,crawl_date_bsr,rank
       
     """, con = conn )
+    df_comp_asins.sort_values(['seedid','crawl_date_bsr','rank_bsr'],inplace=True)
     df_own_asins=pd.read_sql(sql=f"""
     SELECT 'our' asinsource,lower(case when seed.domain ='gb' then 'uk' else seed.domain end) domain,seed.id seedid,seed.name categoryname,seed.currency,comp.own_asin asin,'' crawl_date_bsr,'' rank_bsr FROM 
     (select * from `kp_competitor` ) comp
@@ -83,7 +84,7 @@ col1,col2=st.columns(2)
 cbxls = {}
 expander_1=col1.expander('选择自有产品asin')
 for i, asin in enumerate(df_own_asins_c['asin'].to_list()):
-    print(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1])
+    # print(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1])
     if  pd.isna(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]) \
             or df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]=='None':
         cbxls[asin] = expander_1.checkbox('选择asin', key=f'cbxlkey_{asin}_{str(i)}')
@@ -118,20 +119,29 @@ startdate,end_date=expander_2.select_slider(
     options=datelist,
     value=(datelist[-1],datelist[-1])
 )
-for i, asin in enumerate(df_comp_asins_c['asin'].to_list()):
-    print(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1])
+for i, asin in enumerate(df_comp_asins_c.loc[(df_comp_asins_c['crawl_date_bsr']>=startdate)&(df_comp_asins_c['crawl_date_bsr']<=end_date),:]['asin'].to_list()):
+    # print(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1])
     if  pd.isna(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]) \
             or df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1]=='None':
         cbxrs[asin] = expander_2.checkbox('选择asin', key=f'cbxrkey_{asin}_{str(i)}')
         expander_2.write({'SELLER':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['sellerName'].values[-1],
-                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1]})
+                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1],
+                         'crawl_date':df_jsinfo.loc[(df_jsinfo['asin'] == asin) & (df_jsinfo['seedid'] == bsrseedid), :]['crawl_date_bsr'].values[-1],
+                         'rank':df_jsinfo.loc[(df_jsinfo['asin'] == asin) & (df_jsinfo['seedid'] == bsrseedid), :]['rank_bsr'].values[-1]},
+
+        )
     else:
 
         cbxrs[asin] = expander_2.checkbox('选择asin', key=f'cbxrkey_{asin}_{str(i)}')
         expander_2.image(df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['imageUrl'].values[-1], width=100,
                      )
         expander_2.write({'SELLER':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['sellerName'].values[-1],
-                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1]})
+                         'asin':df_jsinfo.loc[(df_jsinfo['asin']==asin)&(df_jsinfo['seedid']==bsrseedid),:]['asin'].values[-1],
+                         'crawl_date':df_jsinfo.loc[(df_jsinfo['asin'] == asin) & (df_jsinfo['seedid'] == bsrseedid), :]['crawl_date_bsr'].values[-1],
+                         'rank':df_jsinfo.loc[(df_jsinfo['asin'] == asin) & (df_jsinfo['seedid'] == bsrseedid), :]['rank_bsr'].values[-1]},
+
+
+                         )
 ms2=[]
 for k,v in cbxrs.items():
     if v==True:
@@ -148,14 +158,14 @@ for k,v in cbxrs.items():
 showasin=st.checkbox('显示分asin',True)
 showavg=st.checkbox('显示平均',True)
 df_jsinfo_ms1=df_jsinfo.loc[(df_jsinfo['asin'].isin(ms1))&(df_jsinfo['domain']==countryoption.lower())&(df_jsinfo['asinsource']=='our')]
-print('>>>>>>>>>>>>>>>ms1df')
+# print('>>>>>>>>>>>>>>>ms1df')
 dfjsinfoms1_avg=df_jsinfo_ms1.groupby('crawl_date').agg({'price':'mean','rank':'mean','estimatedsales_daily':'mean'}).reset_index()
-print(dfjsinfoms1_avg)
+# print(dfjsinfoms1_avg)
 
 df_jsinfo_ms2=df_jsinfo.loc[(df_jsinfo['asin'].isin(ms2))&(df_jsinfo['domain']==countryoption.lower())&(df_jsinfo['asinsource']=='competitor')]
-print('>>>>>>>>>>>>>>>ms2df')
+# print('>>>>>>>>>>>>>>>ms2df')
 dfjsinfoms2_avg=df_jsinfo_ms2.groupby('crawl_date').agg({'price':'mean','rank':'mean','estimatedsales_daily':'mean'}).reset_index()
-print(dfjsinfoms2_avg)
+# print(dfjsinfoms2_avg)
 
 owncolors=['#fa8072','#ff73b3','#ff7f50','#ff8033','#e68ab8','#e9a867','#f3e1ae']
 compcolors=['#c0c0c0','#5686bf','#5f9ea0','#2a52be','#73b839','#5c50e6','#0e6551']
@@ -241,72 +251,78 @@ for j,asin in enumerate(ms2):
 
 
 if showavg:
-    pricetraces.append(
-        go.Scatter(
-            x=dfjsinfoms1_avg['crawl_date'],
-            y=dfjsinfoms1_avg['price'],
-            name='价格-我方均价',
-            mode='lines',
-            # line=('longdashdot'),
-            line=dict(dash='longdashdot',color='#cc0033', width=3, ),
-            # line=dict(color=colors[i], width=line_size[i]),
-            connectgaps=True,
-        ))
-    pricetraces.append(
-        go.Scatter(
-            x=dfjsinfoms2_avg['crawl_date'],
-            y=dfjsinfoms2_avg['price'],
-            name='价格-对方均价',
-            mode='lines',
-            # line=('longdashdot'),
-            line=dict(dash='longdashdot',color='#0000ff', width=3, ),
-            # line=dict(color=colors[i], width=line_size[i]),
-            connectgaps=True,
-        ))
-    ranktraces.append(
-        go.Scatter(
-            x=dfjsinfoms1_avg['crawl_date'],
-            y=dfjsinfoms1_avg['rank'],
-            name='价格-我方平均排名',
-            mode='lines',
-            # line=('longdashdot'),
-            line=dict(dash='longdashdot',color='#cc0033', width=3, ),
-            # line=dict(color=colors[i], width=line_size[i]),
-            connectgaps=True,
-        ))
-    ranktraces.append(
-        go.Scatter(
-            x=dfjsinfoms2_avg['crawl_date'],
-            y=dfjsinfoms2_avg['rank'],
-            name='价格-对方平均排名',
-            mode='lines',
-            # line=('longdashdot'),
-            line=dict(dash='longdashdot',color='#0000ff', width=3, ),
-            # line=dict(color=colors[i], width=line_size[i]),
-            connectgaps=True,
-        ))
-    salestraces.append(
-        go.Scatter(
-            x=dfjsinfoms1_avg['crawl_date'],
-            y=dfjsinfoms1_avg['estimatedsales_daily'],
-            name='价格-我方平均销量',
-            mode='lines',
-            # line=('longdashdot'),
-            line=dict(dash='longdashdot',color='#cc0033', width=3, ),
-            # line=dict(color=colors[i], width=line_size[i]),
-            connectgaps=True,
-        ))
-    salestraces.append(
-        go.Scatter(
-            x=dfjsinfoms2_avg['crawl_date'],
-            y=dfjsinfoms2_avg['estimatedsales_daily'],
-            name='价格-对方平均销量',
-            mode='lines',
-            # line=('longdashdot'),
-            line=dict(dash='longdashdot',color='#0000ff', width=3, ),
-            # line=dict(color=colors[i], width=line_size[i]),
-            connectgaps=True,
-        ))
+    if len(ms1)>1:
+        pricetraces.append(
+            go.Scatter(
+                x=dfjsinfoms1_avg['crawl_date'],
+                y=dfjsinfoms1_avg['price'],
+                name='价格-我方均价',
+                mode='lines',
+                # line=('longdashdot'),
+                line=dict(dash='longdashdot',color='#cc0033', width=3, ),
+                # line=dict(color=colors[i], width=line_size[i]),
+                connectgaps=True,
+            ))
+    if len(ms2)>1:
+        pricetraces.append(
+            go.Scatter(
+                x=dfjsinfoms2_avg['crawl_date'],
+                y=dfjsinfoms2_avg['price'],
+                name='价格-对方均价',
+                mode='lines',
+                # line=('longdashdot'),
+                line=dict(dash='longdashdot',color='#0000ff', width=3, ),
+                # line=dict(color=colors[i], width=line_size[i]),
+                connectgaps=True,
+            ))
+    if len(ms1)>1:
+        ranktraces.append(
+            go.Scatter(
+                x=dfjsinfoms1_avg['crawl_date'],
+                y=dfjsinfoms1_avg['rank'],
+                name='价格-我方平均排名',
+                mode='lines',
+                # line=('longdashdot'),
+                line=dict(dash='longdashdot',color='#cc0033', width=3, ),
+                # line=dict(color=colors[i], width=line_size[i]),
+                connectgaps=True,
+            ))
+    if len(ms2) > 1:
+        ranktraces.append(
+            go.Scatter(
+                x=dfjsinfoms2_avg['crawl_date'],
+                y=dfjsinfoms2_avg['rank'],
+                name='价格-对方平均排名',
+                mode='lines',
+                # line=('longdashdot'),
+                line=dict(dash='longdashdot',color='#0000ff', width=3, ),
+                # line=dict(color=colors[i], width=line_size[i]),
+                connectgaps=True,
+            ))
+    if len(ms1)>1:
+        salestraces.append(
+            go.Scatter(
+                x=dfjsinfoms1_avg['crawl_date'],
+                y=dfjsinfoms1_avg['estimatedsales_daily'],
+                name='价格-我方平均销量',
+                mode='lines',
+                # line=('longdashdot'),
+                line=dict(dash='longdashdot',color='#cc0033', width=3, ),
+                # line=dict(color=colors[i], width=line_size[i]),
+                connectgaps=True,
+            ))
+    if len(ms2)>1:
+        salestraces.append(
+            go.Scatter(
+                x=dfjsinfoms2_avg['crawl_date'],
+                y=dfjsinfoms2_avg['estimatedsales_daily'],
+                name='价格-对方平均销量',
+                mode='lines',
+                # line=('longdashdot'),
+                line=dict(dash='longdashdot',color='#0000ff', width=3, ),
+                # line=dict(color=colors[i], width=line_size[i]),
+                connectgaps=True,
+            ))
 # layout = go.Layout(
 #     xaxis=dict(
 #         showline=True,
@@ -394,3 +410,93 @@ fig1 = go.Figure(data=[
 
     ])
 st.plotly_chart(fig1, use_container_width=True)
+
+def getrangedf(df,granularity=20):
+    lmax=df['length'].max()
+    wmax=df['width'].max()
+    hmax=df['height'].max()
+    # print('lwh>>>>>')
+    # print(lmax,wmax,hmax)
+    # print(max([lmax,wmax,hmax]))
+    amax=max([lmax, wmax, hmax])
+    def get_inwhichrange(v):
+        rangenum=round(amax/granularity)
+        for i in range(0,rangenum):
+            if i*granularity<v<=(i+1)*granularity:
+                return f'{str(i*granularity)}~{str((i+1)*granularity)}'
+    def get_inwhichrange_midv(v):
+        rangenum=round(amax/granularity)
+        for i in range(0,rangenum):
+            if i*granularity<v<=(i+1)*granularity:
+                return (i*granularity+(i+1)*granularity)/2
+    def gettickvals():
+        rangenum=round(amax/granularity)
+        tvlist=[]
+        for i in range(0,rangenum):
+            tvlist.append(f'{str(i*granularity)}~{str((i+1)*granularity)}')
+        return tvlist
+    df['length_iwr']=df['length'].apply(lambda x:get_inwhichrange(x))
+    df['width_iwr']=df['width'].apply(lambda x:get_inwhichrange(x))
+    df['height_iwr']=df['height'].apply(lambda x:get_inwhichrange(x))
+    df['length_iwr_midv']=df['length'].apply(lambda x:get_inwhichrange_midv(x))
+    df['width_iwr_midv']=df['width'].apply(lambda x:get_inwhichrange_midv(x))
+    df['height_iwr_midv']=df['height'].apply(lambda x:get_inwhichrange_midv(x))
+    df=(df[['length','length_iwr','width','width_iwr','length_iwr_midv','width_iwr_midv','height_iwr_midv','height','height_iwr']])
+    df= df.groupby(['length_iwr','width_iwr','height_iwr','length_iwr_midv','width_iwr_midv','height_iwr_midv']).count().reset_index()
+    return df,gettickvals()
+
+
+df_sizerange,tvlist=getrangedf(df_jsinfo_size,20)
+print(tvlist)
+print(df_sizerange)
+
+############
+st.subheader('尺寸分布3D热力图')
+fig2 = go.Figure(data=[
+     go.Scatter3d(x=df_sizerange['length_iwr'], y=df_sizerange['width_iwr'], z=df_sizerange['height_iwr'],
+                  mode='markers',
+                  # marker=dict(size=2),
+
+                    marker = dict(
+                          size = 4,
+                          color = df_sizerange['length'], # set color to an array/list of desired values
+                          colorscale = 'Viridis'
+                          )
+
+                 ),
+    ])
+# fig2 = go.Figure(data=[
+#      go.Scatter3d(x=df_sizerange['length_iwr_midv'], y=df_sizerange['width_iwr_midv'], z=df_sizerange['height_iwr_midv'],
+#                   mode='markers',
+#                   # marker=dict(size=2),
+#
+#                     marker = dict(
+#                           size = 4,
+#                           color = df_sizerange['length'], # set color to an array/list of desired values
+#                           colorscale = 'Viridis'
+#                           )
+#
+#                  ),
+#     ])
+fig2.update_layout(
+    xaxis=dict(
+linecolor='red',
+        tickmode='array',
+        tickvals=tvlist+['fdfd'],
+        ticktext=tvlist+['fdfd','123','111','22','333','444','55','66'],
+
+    ),
+    yaxis=dict(
+
+        tickmode='array',
+        tickvals=tvlist + ['fdfd'],
+        ticktext=tvlist + ['fdfd'],
+    ),
+    # zaxis=dict(
+    #
+    #     tickmode='array',
+    #     tickvals=tvlist + ['fdfd'],
+    #     ticktext=tvlist + ['fdfd'],
+    # ),
+)
+st.plotly_chart(fig2, use_container_width=True)
