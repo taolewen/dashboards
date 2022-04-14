@@ -398,57 +398,57 @@ metric_figure["layout"]["yaxis3"].update({"title": "预估日销"})
 
 st.plotly_chart(metric_figure, use_container_width=True)
 
-
-############
-st.subheader('尺寸分布3D散点图')
-df_jsinfo_size=df_jsinfo.loc[(df_jsinfo['seedid']==bsrseedid)&(df_jsinfo['domain']==countryoption.lower())&((df_jsinfo['dimensionUnit'] =='centimetres') |(df_jsinfo['dimensionUnit'] =='Zentimeter') ),:]
-fig1 = go.Figure(data=[
-     go.Scatter3d(x=df_jsinfo_size['length'], y=df_jsinfo_size['width'], z=df_jsinfo_size['height'],
-                  mode='markers',
-                  marker=dict(size=2)
-                 ),
-
-    ])
-st.plotly_chart(fig1, use_container_width=True)
-
-def getrangedf(df,granularity=20):
-    lmax=df['length'].max()
-    wmax=df['width'].max()
-    hmax=df['height'].max()
-    # print('lwh>>>>>')
-    # print(lmax,wmax,hmax)
-    # print(max([lmax,wmax,hmax]))
-    amax=max([lmax, wmax, hmax])
-    def get_inwhichrange(v):
-        rangenum=round(amax/granularity)
-        for i in range(0,rangenum):
-            if i*granularity<v<=(i+1)*granularity:
-                return f'{str(i*granularity)}~{str((i+1)*granularity)}'
-    def get_inwhichrange_midv(v):
-        rangenum=round(amax/granularity)
-        for i in range(0,rangenum):
-            if i*granularity<v<=(i+1)*granularity:
-                return (i*granularity+(i+1)*granularity)/2
-    def gettickvals():
-        rangenum=round(amax/granularity)
-        tvlist=[]
-        for i in range(0,rangenum):
-            tvlist.append(f'{str(i*granularity)}~{str((i+1)*granularity)}')
-        return tvlist
-    df['length_iwr']=df['length'].apply(lambda x:get_inwhichrange(x))
-    df['width_iwr']=df['width'].apply(lambda x:get_inwhichrange(x))
-    df['height_iwr']=df['height'].apply(lambda x:get_inwhichrange(x))
-    df['length_iwr_midv']=df['length'].apply(lambda x:get_inwhichrange_midv(x))
-    df['width_iwr_midv']=df['width'].apply(lambda x:get_inwhichrange_midv(x))
-    df['height_iwr_midv']=df['height'].apply(lambda x:get_inwhichrange_midv(x))
-    df=(df[['length','length_iwr','width','width_iwr','length_iwr_midv','width_iwr_midv','height_iwr_midv','height','height_iwr']])
-    df= df.groupby(['length_iwr','width_iwr','height_iwr','length_iwr_midv','width_iwr_midv','height_iwr_midv']).count().reset_index()
-    return df,gettickvals()
-
-
-df_sizerange,tvlist=getrangedf(df_jsinfo_size,20)
-print(tvlist)
-print(df_sizerange)
+#
+# ############
+# st.subheader('尺寸分布3D散点图')
+# df_jsinfo_size=df_jsinfo.loc[(df_jsinfo['seedid']==bsrseedid)&(df_jsinfo['domain']==countryoption.lower())&((df_jsinfo['dimensionUnit'] =='centimetres') |(df_jsinfo['dimensionUnit'] =='Zentimeter') ),:]
+# fig1 = go.Figure(data=[
+#      go.Scatter3d(x=df_jsinfo_size['length'], y=df_jsinfo_size['width'], z=df_jsinfo_size['height'],
+#                   mode='markers',
+#                   marker=dict(size=2)
+#                  ),
+#
+#     ])
+# st.plotly_chart(fig1, use_container_width=True)
+#
+# def getrangedf(df,granularity=20):
+#     lmax=df['length'].max()
+#     wmax=df['width'].max()
+#     hmax=df['height'].max()
+#     # print('lwh>>>>>')
+#     # print(lmax,wmax,hmax)
+#     # print(max([lmax,wmax,hmax]))
+#     amax=max([lmax, wmax, hmax])
+#     def get_inwhichrange(v):
+#         rangenum=round(amax/granularity)
+#         for i in range(0,rangenum):
+#             if i*granularity<v<=(i+1)*granularity:
+#                 return f'{str(i*granularity)}~{str((i+1)*granularity)}'
+#     def get_inwhichrange_midv(v):
+#         rangenum=round(amax/granularity)
+#         for i in range(0,rangenum):
+#             if i*granularity<v<=(i+1)*granularity:
+#                 return (i*granularity+(i+1)*granularity)/2
+#     def gettickvals():
+#         rangenum=round(amax/granularity)
+#         tvlist=[]
+#         for i in range(0,rangenum):
+#             tvlist.append(f'{str(i*granularity)}~{str((i+1)*granularity)}')
+#         return tvlist
+#     df['length_iwr']=df['length'].apply(lambda x:get_inwhichrange(x))
+#     df['width_iwr']=df['width'].apply(lambda x:get_inwhichrange(x))
+#     df['height_iwr']=df['height'].apply(lambda x:get_inwhichrange(x))
+#     df['length_iwr_midv']=df['length'].apply(lambda x:get_inwhichrange_midv(x))
+#     df['width_iwr_midv']=df['width'].apply(lambda x:get_inwhichrange_midv(x))
+#     df['height_iwr_midv']=df['height'].apply(lambda x:get_inwhichrange_midv(x))
+#     df=(df[['length','length_iwr','width','width_iwr','length_iwr_midv','width_iwr_midv','height_iwr_midv','height','height_iwr']])
+#     df= df.groupby(['length_iwr','width_iwr','height_iwr','length_iwr_midv','width_iwr_midv','height_iwr_midv']).count().reset_index()
+#     return df,gettickvals()
+#
+#
+# df_sizerange,tvlist=getrangedf(df_jsinfo_size,20)
+# print(tvlist)
+# print(df_sizerange)
 #
 # ############
 # st.subheader('尺寸分布3D热力图')
