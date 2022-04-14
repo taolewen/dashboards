@@ -58,7 +58,7 @@ with st.sidebar:
 
     countryoption = st.selectbox(
          '选择国家',
-        tuple(set(df_categorys['domain'].to_list())),index='DE')
+        tuple(set(df_categorys['domain'].to_list())))
     st.write('You selected:', countryoption)
 
     cateoption = st.radio(
